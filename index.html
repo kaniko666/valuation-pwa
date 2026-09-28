@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Valuation PWA - Projeção de Fluxo de Caixa">
+    <title>Valuation PWA - Etapa 1</title>
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --text-light: #64748b;
+            --border-color: #cbd5e1;
+            --success-bg: #f0fdf4;
+            --success-border: #bbf7d0;
+            --success-text: #166534;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+                        0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 650px;
+        }
+
+        header {
+            background: var(--primary-color);
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+
+        .content {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .welcome-screen {
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .welcome-screen h2 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .welcome-screen p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-color);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--text-color);
+            margin-top: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .result-card {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            border-radius: 16px;
+            padding: 16px;
+        }
+
+        .result-card h3 {
+            font-size: 0.9rem;
+            color: var(--success-text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .result-card .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--success-text);
+        }
+
+        .result-card p {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .scrollable-form {
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .scrollable-form::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scrollable-form::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 0;
+            }
+
+            .mobile-container {
+                min-height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mobile-container">
+        <header>
+            <h1>Valuation PWA</h1>
+            <p>Projeção de Fluxo de Caixa (Próximo Ano)</p>
+        </header>
+
+        <div class="content">
+            <!-- TELA 1: INÍCIO -->
+            <div id="screen-1" class="screen welcome-screen active">
+                <h2>Bem-vindo à Análise</h2>
+
+                <p>
+                    Esta ferramenta calcula automaticamente o
+                    <strong>FCFF</strong> (Fluxo de Caixa Livre para a Firma)
+                    e o <strong>FCFE</strong> (Fluxo de Caixa Livre para o
+                    Acionista) projetados para o próximo ano.
+                </p>
+
+                <button class="btn" type="button" onclick="goToScreen('screen-2')">
+                    Iniciar Projeção
+                </button>
+            </div>
+
+            <!-- TELA 2: DADOS DA PROJEÇÃO -->
+            <div id="screen-2" class="screen">
+                <h2 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--primary-color);">
+                    Insira os Dados Previstos
+                </h2>
+
+                <div class="scrollable-form">
+                    <div class="form-group">
+                        <label for="ebit">EBIT (R$)</label>
+                        <input
+                            type="number"
+                            id="ebit"
+                            placeholder="Ex: 150000"
+                            step="any"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ir">Alíquota de IR (%)</label>
+                        <input
+                            type="number"
+                            id="ir"
+                            placeholder="Ex: 34 (para 34%)"
+                            step="any"
+                            min="0"
+                            max="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="depreciacao">Depreciação (R$)</label>
+                        <input
+                            type="number"
+                            id="depreciacao"
+                            placeholder="Ex: 20000"
+                            step="any"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="capex">CAPEX (R$)</label>
+                        <input
+                            type="number"
+                            id="capex"
+                            placeholder="Ex: 40000"
+                            step="any"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="wc">Variação do Capital de Giro (R$)</label>
+                        <input
+                            type="number"
+                            id="wc"
+                            placeholder="Ex: 10000 (positivo aumenta NCGW)"
+                            step="any"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="lucroLiquido">Lucro Líquido (R$)</label>
+                        <input
+                            type="number"
+                            id="lucroLiquido"
+                            placeholder="Ex: 80000"
+                            step="any"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novasDividas">Novas Dívidas (R$)</label>
+                        <input
+                            type="number"
+                            id="novasDividas"
+                            placeholder="Ex: 30000"
+                            step="any"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amortizacao">Amortização das Dívidas (R$)</label>
+                        <input
+                            type="number"
+                            id="amortizacao"
+                            placeholder="Ex: 15000"
+                            step="any"
+                        >
+                    </div>
+                </div>
+
+                <button class="btn" type="button" onclick="calcularValuation()">
+                    Calcular Fluxos de Caixa
+                </button>
+
+                <button class="btn btn-secondary" type="button" onclick="goToScreen('screen-1')">
+                    Voltar
+                </button>
+            </div>
+
+            <!-- TELA 3: RESULTADOS -->
+            <div id="screen-3" class="screen">
+                <h2 style="font-size: 1.1rem; margin-bottom: 12px; color: var(--primary-color);">
+                    Resultados Projetados
+                </h2>
+
+                <div class="results-container">
+                    <div class="result-card">
+                        <h3>FCFF (Próximo Ano)</h3>
+                        <div class="value" id="res-fcff">R$ 0,00</div>
+                        <p>Fluxo de Caixa Livre para a Firma</p>
+                    </div>
+
+                    <div class="result-card">
+                        <h3>FCFE (Próximo Ano)</h3>
+                        <div class="value" id="res-fcfe">R$ 0,00</div>
+                        <p>Fluxo de Caixa Livre para o Acionista</p>
+                    </div>
+                </div>
+
+                <button
+                    class="btn"
+                    type="button"
+                    onclick="goToScreen('screen-2')"
+                    style="margin-top: 16px;"
+                >
+                    Alterar Dados / Recalcular
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goToScreen(screenId) {
+            document.querySelectorAll(".screen").forEach((screen) => {
+                screen.classList.remove("active");
+            });
+
+            const targetScreen = document.getElementById(screenId);
+
+            if (targetScreen) {
+                targetScreen.classList.add("active");
+            }
+        }
+
+        function formatarMoeda(valor) {
+            return valor.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL"
+            });
+        }
+
+        function calcularValuation() {
+            // Coletar valores dos inputs
+            const ebit =
+                parseFloat(document.getElementById("ebit").value) || 0;
+
+            const aliquotaIR =
+                (parseFloat(document.getElementById("ir").value) || 0) / 100;
+
+            const depreciacao =
+                parseFloat(document.getElementById("depreciacao").value) || 0;
+
+            const capex =
+                parseFloat(document.getElementById("capex").value) || 0;
+
+            const variacaoWC =
+                parseFloat(document.getElementById("wc").value) || 0;
+
+            const lucroLiquido =
+                parseFloat(document.getElementById("lucroLiquido").value) || 0;
+
+            const novasDividas =
+                parseFloat(document.getElementById("novasDividas").value) || 0;
+
+            const amortizacao =
+                parseFloat(document.getElementById("amortizacao").value) || 0;
+
+            // FCFF = EBIT * (1 - Alíquota de IR)
+            //       + Depreciação - CAPEX - Variação do Capital de Giro
+            const fcff =
+                (ebit * (1 - aliquotaIR))
+                + depreciacao
+                - capex
+                - variacaoWC;
+
+            // FCFE = Lucro Líquido + Depreciação - CAPEX
+            //       - Variação do Capital de Giro
+            //       + Novas Dívidas - Amortização das Dívidas
+            const fcfe =
+                lucroLiquido
+                + depreciacao
+                - capex
+                - variacaoWC
+                + novasDividas
+                - amortizacao;
+
+            // Exibir resultados
+            document.getElementById("res-fcff").innerText =
+                formatarMoeda(fcff);
+
+            document.getElementById("res-fcfe").innerText =
+                formatarMoeda(fcfe);
+
+            // Ir para a tela de resultados
+            goToScreen("screen-3");
+        }
+    </script>
+</body>
+</html>
