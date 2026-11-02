@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App de Valuation - PWA</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --success: #059669;
+            --danger: #dc2626;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background-color: var(--card-bg);
+            min-height: 100vh;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        header p {
+            margin: 0.25rem 0 0;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .content {
+            padding: 1.25rem;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 5rem;
+        }
+
+        .step-section {
+            display: none;
+        }
+
+        .step-section.active {
+            display: block;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.3rem;
+            margin-top: 0;
+        }
+
+        .form-group {
+            margin-bottom: 0.85rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.65rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            flex: 1;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button.secondary {
+            background-color: #6b7280;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card h3 {
+            margin: 0 0 0.5rem;
+            font-size: 0.95rem;
+            color: var(--primary);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .result-row span:last-child {
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            font-size: 0.75rem;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 0.4rem;
+            text-align: right;
+        }
+
+        th:first-child, td:first-child {
+            text-align: left;
+        }
+
+        th {
+            background-color: #e2e8f0;
+        }
+
+        .alert-box {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--danger);
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: #e5e7eb;
+            padding: 0.25rem;
+            border-radius: 0.375rem;
+            margin-bottom: 1rem;
+        }
+
+        .nav-tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 0.25rem;
+            background: transparent;
+            color: var(--text-color);
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Valuation PWA</h1>
+        <p>Análise de FCFF e FCFE (Etapas 1 e 2)</p>
+    </header>
+
+    <div class="content">
+        <div id="errorAlert" class="alert-box"></div>
+
+        
+        <!-- TELA 1: INÍCIO -->
+        <div id="screen1" class="step-section active">
+            <h2>Bem-vindo</h2>
+            <p style="font-size: 0.9rem; line-height: 1.4;">
+                Este aplicativo calcula as projeções de Fluxo de Caixa Livre para a Firma (FCFF) e para o Acionista (FCFE), estimando o valor explícito, valor residual e o preço justo por ação.
+            </p>
+            
+            <!-- CAMPO DOS INTEGRANTES DO GRUPO -->
+            <div class="card" style="margin-top: 1rem; background-color: #eff6ff; border-color: #bfdbfe;">
+                <h3 style="color: #1e40af; margin-bottom: 0.35rem;">Integrantes do Grupo</h3>
+                <p style="font-size: 0.85rem; margin: 0; line-height: 1.4;">
+                    • Ana Luise Francisco Monteiro  <br>
+                    • Afonso Vieira Cordeiro  <br>
+                    • Canico Maria Pessanha De Azevedo  <br>
+                    
+                </p>
+            </div>
+
+            <div class="btn-container">
+                <button onclick="goToScreen(2)">Iniciar Análise</button>
+                <button onclick="fillTestCase()" class="secondary" style="font-size: 0.8rem;">Carregar Caso de Teste</button>
+            </div>
+        </div>            <h2>Bem-vindo</h2>
+            <p style="font-size: 0.9rem; line-height: 1.4;">
+                Este aplicativo calcula as projeções de Fluxo de Caixa Livre para a Firma (FCFF) e para o Acionista (FCFE), estimando o valor explícito, valor residual e o preço justo por ação.
+            </p>
+            <div class="card" style="margin-top: 1.5rem;">
+                <h3>Grupo / Desenvolvedores</h3>
+                <p style="font-size: 0.85rem; margin: 0;">Equipe de Finanças / UFF</p>
+            </div>
+            <div class="btn-container">
+                <button onclick="goToScreen(2)">Iniciar Análise</button>
+                <button onclick="fillTestCase()" class="secondary" style="font-size: 0.8rem;">Carregar Caso de Teste</button>
+            </div>
+        </div>
+
+        <!-- TELA 2: DADOS DO ANO 1 (ETAPA 1) -->
+        <div id="screen2" class="step-section">
+            <h2>1. Dados do Próximo Ano (Ano 1)</h2>
+            <div class="form-group">
+                <label>EBIT (R$)</label>
+                <input type="number" id="ebit" step="0.01" value="2000000">
+            </div>
+            <div class="form-group">
+                <label>Alíquota de IR (%)</label>
+                <input type="number" id="aliqIr" step="0.01" value="34">
+            </div>
+            <div class="form-group">
+                <label>Depreciação (R$)</label>
+                <input type="number" id="depr" step="0.01" value="300000">
+            </div>
+            <div class="form-group">
+                <label>CAPEX (R$)</label>
+                <input type="number" id="capex" step="0.01" value="450000">
+            </div>
+            <div class="form-group">
+                <label>Variação do Capital de Giro (R$)</label>
+                <input type="number" id="varWc" step="0.01" value="100000">
+            </div>
+            <div class="form-group">
+                <label>Lucro Líquido (R$)</label>
+                <input type="number" id="lucroLiq" step="0.01" value="1100000">
+            </div>
+            <div class="form-group">
+                <label>Novas Dívidas (R$)</label>
+                <input type="number" id="novasDiv" step="0.01" value="200000">
+            </div>
+            <div class="form-group">
+                <label>Amortização das Dívidas (R$)</label>
+                <input type="number" id="amortDiv" step="0.01" value="150000">
+            </div>
+
+            <div class="btn-container">
+                <button class="secondary" onclick="goToScreen(1)">Voltar</button>
+                <button onclick="goToScreen(3)">Próximo: Premissas</button>
+            </div>
+        </div>
+
+        <!-- TELA 3: PREMISSAS DE VALUATION (ETAPA 2) -->
+        <div id="screen3" class="step-section">
+            <h2>2. Premissas de Valuation (Etapa 2)</h2>
+            <div class="form-group">
+                <label>Horizonte do Período Explícito (anos - n)</label>
+                <input type="number" id="horizonte" step="1" value="5">
+            </div>
+            <div class="form-group">
+                <label>Crescimento no Período Explícito (ge - %)</label>
+                <input type="number" id="gExplicito" step="0.01" value="8">
+            </div>
+            <div class="form-group">
+                <label>Crescimento na Perpetuidade (g - %)</label>
+                <input type="number" id="gPerp" step="0.01" value="3">
+            </div>
+            <div class="form-group">
+                <label>WACC (%)</label>
+                <input type="number" id="wacc" step="0.01" value="12">
+            </div>
+            <div class="form-group">
+                <label>Custo do Capital Próprio - Ke (%)</label>
+                <input type="number" id="ke" step="0.01" value="14">
+            </div>
+            <div class="form-group">
+                <label>Dívida Líquida (R$)</label>
+                <input type="number" id="dividaLiq" step="0.01" value="2500000">
+            </div>
+            <div class="form-group">
+                <label>Número de Ações</label>
+                <input type="number" id="numAcoes" step="1" value="1000000">
+            </div>
+            <div class="form-group">
+                <label>Preço Atual da Ação (R$ - Opcional)</label>
+                <input type="number" id="precoAtual" step="0.01" value="9.00">
+            </div>
+
+            <div class="btn-container">
+                <button class="secondary" onclick="goToScreen(2)">Voltar</button>
+                <button onclick="calcularValuation()">Calcular Valuation</button>
+            </div>
+        </div>
+
+        <!-- TELA 4: FLUXOS PREVISTOS -->
+        <div id="screen4" class="step-section">
+            <h2>3. Tabela de Fluxos Previstos</h2>
+            <div class="nav-tabs">
+                <div class="nav-tab active" id="tabFcff" onclick="switchTab('fcff')">Ótica FCFF</div>
+                <div class="nav-tab" id="tabFcfe" onclick="switchTab('fcfe')">Ótica FCFE</div>
+            </div>
+            
+            <div id="containerTabelaFcff"></div>
+            <div id="containerTabelaFcfe" style="display:none;"></div>
+
+            <div class="btn-container">
+                <button class="secondary" onclick="goToScreen(3)">Editar Premissas</button>
+                <button onclick="goToScreen(5)">Ver Resultados Finais</button>
+            </div>
+        </div>
+
+        <!-- TELA 5: VALOR JUSTO -->
+        <div id="screen5" class="step-section">
+            <h2>4. Resultados e Valor Justo</h2>
+            
+            <div class="card">
+                <h3>Ótica da Firma (FCFF)</h3>
+                <div class="result-row"><span>Valor Explícito:</span><span id="resFcffExplícito">R$ 0,00</span></div>
+                <div class="result-row"><span>Fluxo Ano n+1:</span><span id="resFcffAn1">R$ 0,00</span></div>
+                <div class="result-row"><span>Valor Residual (VRn):</span><span id="resFcffVr">R$ 0,00</span></div>
+                <div class="result-row"><span>VP do Valor Residual:</span><span id="resFcffVpVr">R$ 0,00</span></div>
+                <div class="result-row"><span>Valor da Firma:</span><span id="resValorFirma">R$ 0,00</span></div>
+                <div class="result-row"><span>(-) Dívida Líquida:</span><span id="resDividaLiq">R$ 0,00</span></div>
+                <div class="result-row" style="border-top:1px solid #ddd; padding-top:4px; margin-top:4px;"><span>Valor Justo Patrimônio:</span><span id="resPatrimonioFcff">R$ 0,00</span></div>
+                <div class="result-row" style="font-weight:bold; color:var(--primary);"><span>Valor Justo por Ação:</span><span id="resAcaoFcff">R$ 0,00</span></div>
+                <div class="result-row"><span>Part. Valor Residual:</span><span id="resPartVrFcff">0%</span></div>
+                <div class="result-row"><span>Potencial vs. Preço:</span><span id="resPotencialFcff">0%</span></div>
+            </div>
+
+            <div class="card">
+                <h3>Ótica do Acionista (FCFE)</h3>
+                <div class="result-row"><span>Valor Explícito:</span><span id="resFcfeExplícito">R$ 0,00</span></div>
+                <div class="result-row"><span>Fluxo Ano n+1:</span><span id="resFcfeAn1">R$ 0,00</span></div>
+                <div class="result-row"><span>Valor Residual (VRn):</span><span id="resFcfeVr">R$ 0,00</span></div>
+                <div class="result-row"><span>VP do Valor Residual:</span><span id="resFcfeVpVr">R$ 0,00</span></div>
+                <div class="result-row" style="border-top:1px solid #ddd; padding-top:4px; margin-top:4px; font-weight:bold; color:var(--primary);"><span>Valor Justo Patrimônio:</span><span id="resPatrimonioFcfe">R$ 0,00</span></div>
+                <div class="result-row" style="font-weight:bold; color:var(--primary);"><span>Valor Justo por Ação:</span><span id="resAcaoFcfe">R$ 0,00</span></div>
+                <div class="result-row"><span>Part. Valor Residual:</span><span id="resPartVrFcfe">0%</span></div>
+                <div class="result-row"><span>Potencial vs. Preço:</span><span id="resPotencialFcfe">0%</span></div>
+            </div>
+
+            <div class="btn-container">
+                <button class="secondary" onclick="goToScreen(4)">Ver Tabela</button>
+                <button onclick="goToScreen(1)">Início</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function goToScreen(screenNumber) {
+        document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+        document.getElementById('screen' + screenNumber).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    function fillTestCase() {
+        document.getElementById('ebit').value = 2000000;
+        document.getElementById('aliqIr').value = 34;
+        document.getElementById('depr').value = 300000;
+        document.getElementById('capex').value = 450000;
+        document.getElementById('varWc').value = 100000;
+        document.getElementById('lucroLiq').value = 1100000;
+        document.getElementById('novasDiv').value = 200000;
+        document.getElementById('amortDiv').value = 150000;
+
+        document.getElementById('horizonte').value = 5;
+        document.getElementById('gExplicito').value = 8;
+        document.getElementById('gPerp').value = 3;
+        document.getElementById('wacc').value = 12;
+        document.getElementById('ke').value = 14;
+        document.getElementById('dividaLiq').value = 2500000;
+        document.getElementById('numAcoes').value = 1000000;
+        document.getElementById('precoAtual').value = 9.00;
+        
+        alert("Caso de teste carregado com sucesso! Avance para calcular.");
+        goToScreen(2);
+    }
+
+    function formatBRL(value) {
+        return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function switchTab(type) {
+        if(type === 'fcff') {
+            document.getElementById('tabFcff').classList.add('active');
+            document.getElementById('tabFcfe').classList.remove('active');
+            document.getElementById('containerTabelaFcff').style.display = 'block';
+            document.getElementById('containerTabelaFcfe').style.display = 'none';
+        } else {
+            document.getElementById('tabFcfe').classList.add('active');
+            document.getElementById('tabFcff').classList.remove('active');
+            document.getElementById('containerTabelaFcfe').style.display = 'block';
+            document.getElementById('containerTabelaFcff').style.display = 'none';
+        }
+    }
+
+    function mostrarErro(mensagem) {
+        const alerta = document.getElementById('errorAlert');
+        alerta.innerText = mensagem;
+        alerta.style.display = 'block';
+        setTimeout(() => { alerta.style.display = 'none'; }, 6000);
+    }
+
+    function calcularValuation() {
+        // Coleta de Inputs da Etapa 1
+        const ebit = parseFloat(document.getElementById('ebit').value) || 0;
+        const aliqIr = (parseFloat(document.getElementById('aliqIr').value) || 0) / 100;
+        const depr = parseFloat(document.getElementById('depr').value) || 0;
+        const capex = parseFloat(document.getElementById('capex').value) || 0;
+        const varWc = parseFloat(document.getElementById('varWc').value) || 0;
+        const lucroLiq = parseFloat(document.getElementById('lucroLiq').value) || 0;
+        const novasDiv = parseFloat(document.getElementById('novasDiv').value) || 0;
+        const amortDiv = parseFloat(document.getElementById('amortDiv').value) || 0;
+
+        // Coleta de Inputs da Etapa 2
+        const n = parseInt(document.getElementById('horizonte').value) || 0;
+        const ge = (parseFloat(document.getElementById('gExplicito').value) || 0) / 100;
+        const g = (parseFloat(document.getElementById('gPerp').value) || 0) / 100;
+        const wacc = (parseFloat(document.getElementById('wacc').value) || 0) / 100;
+        const ke = (parseFloat(document.getElementById('ke').value) || 0) / 100;
+        const dividaLiq = parseFloat(document.getElementById('dividaLiq').value) || 0;
+        const numAcoes = parseFloat(document.getElementById('numAcoes').value) || 1;
+        const precoAtual = parseFloat(document.getElementById('precoAtual').value) || 0;
+
+        // Validações Obrigatórias
+        if (wacc <= g || ke <= g) {
+            mostrarErro("Erro: As taxas de desconto (WACC e Ke) devem ser estritamente maiores que a taxa de crescimento na perpetuidade (g).");
+            return;
+        }
+        if (n < 1 || n > 20) {
+            mostrarErro("Erro: O horizonte (n) deve ser um número inteiro entre 1 e 20.");
+            return;
+        }
+        if (numAcoes <= 0) {
+            mostrarErro("Erro: O número de ações deve ser maior que zero.");
+            return;
+        }
+
+        // 1. Cálculo Ano 1 (Etapa 1)
+        const fcff1 = (ebit * (1 - aliqIr)) + depr - capex - varWc;
+        const fcfe1 = lucroLiq + depr - capex - varWc + novasDiv - amortDiv;
+
+        // 2. Projeção Período Explícito & VP (Etapa 2)
+        let htmlFcff = `<table><tr><th>Ano</th><th>FCFF</th><th>Fator (WACC)</th><th>VP (FCFF)</th></tr>`;
+        let htmlFcfe = `<table><tr><th>Ano</th><th>FCFE</th><th>Fator (Ke)</th><th>VP (FCFE)</th></tr>`;
+
+        let somaVpFcff = 0;
+        let somaVpFcfe = 0;
+        let fcffAtual = fcff1;
+        let fcfeAtual = fcfe1;
+        let ultimoFcff = fcff1;
+        let ultimoFcfe = fcfe1;
+
+        for (let t = 1; t <= n; t++) {
+            if (t > 1) {
+                fcffAtual = ultimoFcff * (1 + ge);
+                fcfeAtual = ultimoFcfe * (1 + ge);
+                ultimoFcff = fcffAtual;
+                ultimoFcfe = fcfeAtual;
+            }
+
+            const fatorFcff = 1 / Math.pow(1 + wacc, t);
+            const vpFcff = fcffAtual * fatorFcff;
+            somaVpFcff += vpFcff;
+
+            const fatorFcfe = 1 / Math.pow(1 + ke, t);
+            const vpFcfe = fcfeAtual * fatorFcfe;
+            somaVpFcfe += vpFcfe;
+
+            htmlFcff += `<tr><td>Ano ${t}</td><td>${formatBRL(fcffAtual)}</td><td>${fatorFcff.toFixed(4)}</td><td>${formatBRL(vpFcff)}</td></tr>`;
+            htmlFcfe += `<tr><td>Ano ${t}</td><td>${formatBRL(fcfeAtual)}</td><td>${fatorFcfe.toFixed(4)}</td><td>${formatBRL(vpFcfe)}</td></tr>`;
+        }
+        htmlFcff += `</table>`;
+        htmlFcfe += `</table>`;
+
+        document.getElementById('containerTabelaFcff').innerHTML = htmlFcff;
+        document.getElementById('containerTabelaFcfe').innerHTML = htmlFcfe;
+
+        // 3. Valor Residual (Gordon)
+        const fcffN1 = ultimoFcff * (1 + g);
+        const vrFcff = fcffN1 / (wacc - g);
+        const vpVrFcff = vrFcff / Math.pow(1 + wacc, n);
+
+        const fcfeN1 = ultimoFcfe * (1 + g);
+        const vrFcfe = fcfeN1 / (ke - g);
+        const vpVrFcfe = vrFcfe / Math.pow(1 + ke, n);
+
+        // 4. Valor Justo - Firma e Patrimônio
+        const valorFirma = somaVpFcff + vpVrFcff;
+        const patrimonioFcff = valorFirma - dividaLiq;
+        const acaoFcff = patrimonioFcff / numAcoes;
+        const partVrFcff = vpVrFcff / valorFirma;
+        const potencialFcff = precoAtual > 0 ? (acaoFcff / precoAtual) - 1 : 0;
+
+        const patrimonioFcfe = somaVpFcfe + vpVrFcfe;
+        const acaoFcfe = patrimonioFcfe / numAcoes;
+        const partVrFcfe = vpVrFcfe / patrimonioFcfe;
+        const potencialFcfe = precoAtual > 0 ? (acaoFcfe / precoAtual) - 1 : 0;
+
+        // Preenchimento dos Resultados na Tela 5
+        document.getElementById('resFcffExplícito').innerText = formatBRL(somaVpFcff);
+        document.getElementById('resFcffAn1').innerText = formatBRL(fcffN1);
+        document.getElementById('resFcffVr').innerText = formatBRL(vrFcff);
+        document.getElementById('resFcffVpVr').innerText = formatBRL(vpVrFcff);
+        document.getElementById('resValorFirma').innerText = formatBRL(valorFirma);
+        document.getElementById('resDividaLiq').innerText = formatBRL(dividaLiq);
+        document.getElementById('resPatrimonioFcff').innerText = formatBRL(patrimonioFcff);
+        document.getElementById('resAcaoFcff').innerText = formatBRL(acaoFcff);
+        document.getElementById('resPartVrFcff').innerText = (partVrFcff * 100).toFixed(1) + '%';
+        document.getElementById('resPotencialFcff').innerText = (potencialFcff >= 0 ? '+' : '') + (potencialFcff * 100).toFixed(1) + '%';
+
+        document.getElementById('resFcfeExplícito').innerText = formatBRL(somaVpFcfe);
+        document.getElementById('resFcfeAn1').innerText = formatBRL(fcfeN1);
+        document.getElementById('resFcfeVr').innerText = formatBRL(vrFcfe);
+        document.getElementById('resFcfeVpVr').innerText = formatBRL(vpVrFcfe);
+        document.getElementById('resPatrimonioFcfe').innerText = formatBRL(patrimonioFcfe);
+        document.getElementById('resAcaoFcfe').innerText = formatBRL(acaoFcfe);
+        document.getElementById('resPartVrFcfe').innerText = (partVrFcfe * 100).toFixed(1) + '%';
+        document.getElementById('resPotencialFcfe').innerText = (potencialFcfe >= 0 ? '+' : '') + (potencialFcfe * 100).toFixed(1) + '%';
+
+        goToScreen(4);
+    }
+</script>
+
+</body>
+</html>
